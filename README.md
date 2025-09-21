@@ -1,0 +1,2 @@
+# GrundrechteBot
+Dein Grundrechte Bot
