@@ -3,403 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grundrechte-Bot | Legal Tech Innovation</title>
-    <meta name="description" content="KI-gestützter Grundrechte-Bot für systematische Verfassungsrechtsprüfung mit quellenbasierter Halluzinations-Vermeidung">
+    <title>GrundrechteBot - Ihr KI-Assistent zum Grundgesetz</title>
     <style>
-        * {
+        /* --- Google Fonts Import --- */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Open+Sans:wght@400;700&display=swap');
+
+        /* --- Grundlegende Styles & Variablen --- */
+        :root {
+            --primary-color: #2C3E50; /* Dunkelblau für Seriosität */
+            --secondary-color: #3498DB; /* Helles Blau für Akzente */
+            --background-color: #f4f6f9; /* Helles, sauberes Grau */
+            --text-color: #333333; /* Dunkelgrau für Lesbarkeit */
+            --bot-message-bg: #EAECEE;
+            --user-message-bg: #3498DB;
+            --user-message-text: #ffffff;
+            --font-main: 'Open Sans', sans-serif;
+            --font-headings: 'Montserrat', sans-serif;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 0;
+            display: flex;
+            flex-direction: column; /* Geändert für Footer */
+            min-height: 100vh;
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Header */
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        nav {
-            padding: 1rem 0;
+        main {
+            flex-grow: 1;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #4a5568;
+
+        /* --- Hauptcontainer für die Chat-App --- */
+        .chat-container {
+            width: 100%;
+            max-width: 700px;
+            height: 85vh;
+            max-height: 800px; /* Maximale Höhe hinzugefügt */
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        
-        .contact-btn {
-            background: #667eea;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: transform 0.3s ease;
-        }
-        
-        .contact-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        /* Hero Section */
-        .hero {
-            padding: 150px 0 100px;
+
+        /* --- Header-Bereich --- */
+        .chat-header {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            padding: 20px;
             text-align: center;
-            color: white;
+            border-bottom: 4px solid var(--secondary-color);
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-family: var(--font-headings);
+            font-size: 1.8rem;
         }
         
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            font-weight: 300;
-        }
-        
-        .hero .subtitle {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
+        .chat-header p {
+            margin: 5px 0 0;
+            font-weight: 400;
             opacity: 0.9;
         }
+
+        /* --- Nachrichtenbereich --- */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
         
-        .innovation-badge {
+        .message.bot {
+            background-color: var(--bot-message-bg);
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user {
+            background-color: var(--user-message-bg);
+            color: var(--user-message-text);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.loading {
+            align-self: flex-start;
+        }
+        
+        .loading span {
             display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 25px;
-            border-radius: 50px;
-            margin-bottom: 2rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #bdc3c7;
+            animation: pulse 1.2s infinite ease-in-out;
         }
         
-        /* Main Content */
-        .main-content {
-            background: white;
-            margin-top: -50px;
-            border-radius: 30px 30px 0 0;
-            position: relative;
-            z-index: 10;
+        .loading span:nth-child(2) {
+            animation-delay: 0.2s;
         }
         
-        section {
-            padding: 80px 0;
+        .loading span:nth-child(3) {
+            animation-delay: 0.4s;
         }
         
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: #2d3748;
-        }
-        
-        /* Problem Solution */
-        .problem-solution {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            margin-bottom: 4rem;
-        }
-        
-        .problem, .solution {
-            padding: 2rem;
-            border-radius: 15px;
-        }
-        
-        .problem {
-            background: #fed7d7;
-            border-left: 5px solid #e53e3e;
-        }
-        
-        .solution {
-            background: #c6f6d5;
-            border-left: 5px solid #38a169;
-        }
-        
-        /* Features Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-        
-        .feature-card {
-            background: #f7fafc;
-            padding: 2rem;
-            border-radius: 15px;
-            border: 1px solid #e2e8f0;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .feature-card h3 {
-            color: #2d3748;
-            margin-bottom: 1rem;
-        }
-        
-        /* Highlight Section */
-        .highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 3rem;
-            text-align: center;
-            margin: 4rem 0;
-        }
-        
-        .highlight h3 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        /* Tech Stack */
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .tech-item {
-            background: #f7fafc;
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        /* Target Audience */
-        .audience-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .audience-item {
-            background: #edf2f7;
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease;
-        }
-        
-        .audience-item:hover {
-            border-color: #667eea;
-        }
-        
-        /* Footer */
-        footer {
-            background: #2d3748;
-            color: white;
-            text-align: center;
-            padding: 3rem 0;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .problem-solution {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
+        @keyframes pulse {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1.0);
             }
         }
-        
-        .btn {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
+
+
+        /* --- Eingabebereich --- */
+        .chat-input-form {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #fdfdfd;
+        }
+
+        #userInput {
+            flex-grow: 1;
+            border: 1px solid #ccc;
             border-radius: 25px;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
+            padding: 10px 15px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: var(--secondary-color);
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980B9; /* Etwas dunkleres Blau bei Hover */
         }
         
-        .btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
+        /* --- Scrollbar-Styling (optional aber schick) --- */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
         }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+        
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        footer h3 {
+            color: var(--text-color);
+            font-family: var(--font-headings);
+            margin-bottom: 10px;
+        }
+
+        footer p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+        
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <div class="logo">Grundrechte-Bot</div>
-            <a href="mailto:bahloulmml@gmail.com" class="contact-btn">Kontakt</a>
-        </nav>
-    </header>
 
-    <section class="hero">
-        <div class="container">
-            <div class="innovation-badge">🏛️ Legal Tech Innovation</div>
-            <h1>Grundrechte-Bot</h1>
-            <p class="subtitle">KI-gestützte Systematik für präzise Verfassungsrechtsprüfung</p>
+    <main>
+        <div class="chat-container">
+            <header class="chat-header">
+                <h1>GrundrechteBot</h1>
+                <p>Ihr KI-Assistent zum deutschen Grundgesetz</p>
+            </header>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot">
+                    Hallo! Ich bin der GrundrechteBot. Stellen Sie mir eine Frage zum Grundgesetz, z.B. "Was ist die Menschenwürde?" oder "Erkläre Artikel 3".
+                </div>
+            </div>
+
+            <form class="chat-input-form" id="chat-form">
+                <input type="text" id="userInput" placeholder="Stellen Sie hier Ihre Frage..." autocomplete="off">
+                <button type="submit" aria-label="Nachricht senden">➤</button>
+            </form>
         </div>
-    </section>
-
-    <div class="main-content">
-        <section class="container">
-            <h2 class="section-title">Problem & Innovation</h2>
-            <div class="problem-solution">
-                <div class="problem">
-                    <h3>🚨 Die Herausforderung</h3>
-                    <p>Grundrechte-Hausarbeiten erfordern systematische Prüfung komplexer Verfassungsstrukturen. Traditionelle KI-Tools produzieren jedoch oft ungenaue oder "halluzinierte" Rechtsinformationen, die in juristischen Arbeiten fatal sein können.</p>
-                </div>
-                <div class="solution">
-                    <h3>💡 Die Lösung</h3>
-                    <p>Der Grundrechte-Bot revolutioniert die juristische KI-Unterstützung durch <strong>quellenbasierte Beschränkung</strong> - er arbeitet ausschließlich mit hochgeladenen Materialien und verhindert so Halluzinationen komplett.</p>
-                </div>
-            </div>
-        </section>
-
-        <div class="highlight">
-            <div class="container">
-                <h3>🎯 Kerninnnovation: Anti-Halluzinations-System</h3>
-                <p>Als erstes Legal-Tech-Tool seiner Art beschränkt sich der Bot ausschließlich auf vom Nutzer bereitgestellte Quellen. Dies gewährleistet 100%ige Nachprüfbarkeit und eliminiert das Risiko falscher Rechtsinformationen.</p>
-            </div>
-        </div>
-
-        <section class="container">
-            <h2 class="section-title">Kernfunktionen</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⚖️</div>
-                    <h3>Systematische Grundrechtsprüfung</h3>
-                    <p>Schritt-für-Schritt Führung durch komplexe Prüfungsschemata mit besonderem Fokus auf praktische Anwendung</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🚔</div>
-                    <h3>Polizei- & Verwaltungsrecht</h3>
-                    <p>Spezialisierung auf polizeiliche Eingriffe, Gefahrenabwehr und verwaltungsrechtliche Sonderfälle</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Verhältnismäßigkeitsprüfung</h3>
-                    <p>Strukturierte Analyse der Verhältnismäßigkeit mit praktischen Beispielen und Fallkonstellationen</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Aktuelle BVerfG-Rechtsprechung</h3>
-                    <p>Integration neuester Verfassungsgerichtsentscheidungen und aktueller Rechtsprechung 2024</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Eilfallprüfung</h3>
-                    <p>Spezielle Berücksichtigung von Gefahrensituationen und Eilfallkonstellationen im Sicherheitsbereich</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Datenschutz-Integration</h3>
-                    <p>Berücksichtigung datenschutzrechtlicher Aspekte in sicherheitsbehördlichen Kontexten</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="container">
-            <h2 class="section-title">Zielgruppen</h2>
-            <div class="audience-list">
-                <div class="audience-item">
-                    <h3>🎓 Polizeihochschulen</h3>
-                    <p>Spezielle Unterstützung für Polizeistudierende bei grundrechtssensiblen Einsatzlagen</p>
-                </div>
-                <div class="audience-item">
-                    <h3>🏛️ Verwaltungsfachhochschulen</h3>
-                    <p>Fokus auf verwaltungsrechtliche Grundrechtsanwendung und Ermessensausübung</p>
-                </div>
-                <div class="audience-item">
-                    <h3>⚔️ Bundeswehr-Universitäten</h3>
-                    <p>Berücksichtigung militärspezifischer Grundrechtseinschränkungen und Sonderlagen</p>
-                </div>
-                <div class="audience-item">
-                    <h3>📚 Juristische Fakultäten</h3>
-                    <p>Allgemeine Grundrechtsunterstützung für Studierende und Wissenschaftler</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="container">
-            <h2 class="section-title">Technische Spezifikation</h2>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <h3>🤖 KI-Technologie</h3>
-                    <p>Large Language Model GPT-5 mit spezieller Rechtsdogmatik-Optimierung</p>
-                </div>
-                <div class="tech-item">
-                    <h3>⚙️ Methodik</h3>
-                    <p>Advanced Prompt Engineering für präzise juristische Anwendung</p>
-                </div>
-                <div class="tech-item">
-                    <h3>🎯 Spezialisierung</h3>
-                    <p>Deutsche Verfassungsrechtsdogmatik und Grundrechtssystematik</p>
-                </div>
-                <div class="tech-item">
-                    <h3>📅 Aktualität</h3>
-                    <p>Rechtsprechungsstand 2024 mit kontinuierlicher Aktualisierung</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="container">
-            <h2 class="section-title">Schwerpunktbereiche</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>📜 Grundrechte-Katalog</h3>
-                    <p><strong>Schwerpunkt:</strong> Art. 2, 8, 10, 11, 13 GG<br>
-                    Besondere Berücksichtigung sicherheitsrelevanter Grundrechte</p>
-                </div>
-                <div class="feature-card">
-                    <h3>🔍 Standardmaßnahmen</h3>
-                    <p><strong>Praxis:</strong> Durchsuchung, Identitätsfeststellung, Gewahrsam<br>
-                    Systematische Verhältnismäßigkeitsprüfung</p>
-                </div>
-                <div class="feature-card">
-                    <h3>👥 Versammlungsrecht</h3>
-                    <p><strong>Spezialgebiet:</strong> Art. 8 GG Fallkonstellationen<br>
-                    Kooperations- und Konfrontationslagen</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
+    </main>
+    
     <footer>
-        <div class="container">
-            <p>&copy; 2024 Grundrechte-Bot | Legal Tech Innovation für präzise Verfassungsrechtsprüfung</p>
-            <p>Kontakt: <a href="mailto:bahloulmml@gmail.com" style="color: #667eea;">bahloulmml@gmail.com</a></p>
-        </div>
+        <h3>Impressum</h3>
+        <p>Angaben gemäß § 5 TMG</p>
+        <p>
+            Mohamed Bahloul<br>
+            Kollwitzstraße 43<br>
+            10405 Berlin
+        </p>
+        <p>
+            <strong>Kontakt:</strong><br>
+            E-Mail: <a href="mailto:bahloulmml@gmail.com">bahloulmml@gmail.com</a>
+        </p>
     </footer>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('userInput');
+        const chatMessages = document.getElementById('chat-messages');
+        const API_URL = 'https://grundrechte-bot-api.onrender.com/ask';
+
+        function appendMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            messageDiv.innerHTML = text; 
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+        }
+
+        function toggleLoadingIndicator(show) {
+            let loadingEl = document.getElementById('loading-indicator');
+            if (show) {
+                if (!loadingEl) {
+                    loadingEl = document.createElement('div');
+                    loadingEl.id = 'loading-indicator';
+                    loadingEl.classList.add('message', 'loading');
+                    loadingEl.innerHTML = '<span></span><span></span><span></span>';
+                    chatMessages.appendChild(loadingEl);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            } else {
+                if (loadingEl) {
+                    loadingEl.remove();
+                }
+            }
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userText = userInput.value.trim();
+            if (userText === '') return;
+
+            appendMessage('user', userText);
+            userInput.value = '';
+            toggleLoadingIndicator(true);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: userText }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                toggleLoadingIndicator(false);
+                appendMessage('bot', data.answer);
+
+            } catch (error) {
+                console.error('Error fetching API:', error);
+                toggleLoadingIndicator(false);
+                appendMessage('bot', 'Entschuldigung, es gab ein Problem bei der Verbindung zum Server. Bitte versuchen Sie es später erneut.');
+            }
+        });
+    </script>
 </body>
-</html> 
+</html>
