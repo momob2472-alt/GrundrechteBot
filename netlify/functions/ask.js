@@ -1,35 +1,32 @@
-// Ein einfacherer HTTPS-Request ohne 'node-fetch'
 const https = require('https');
 
 exports.handler = async function (event, context) {
-  // Nur POST-Anfragen erlauben
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    console.error("API Key is not set in environment variables.");
-    return { statusCode: 500, body: 'API Key not found.' };
+    console.error("No API Key found");
+    return { statusCode: 500, body: JSON.stringify({ error: 'No API Key configured' }) };
   }
 
   try {
     const { question } = JSON.parse(event.body);
-    const systemInstruction = "Du bist ein hilfreicher Assistent namens GrundrechteBot. Deine Aufgabe ist es, Fragen zum deutschen Grundgesetz klar, präzise und für Laien verständlich zu beantworten. Beziehe dich immer auf die relevanten Artikel. Antworte ausschließlich auf Deutsch.";
-
+    
+    // Verwenden Sie das aktuelle Modell und v1 statt v1beta
     const postData = JSON.stringify({
       contents: [{
-        parts: [
-          { text: systemInstruction },
-          { text: `Frage: ${question}` }
-        ]
+        parts: [{
+          text: `Du bist ein Assistent für das deutsche Grundgesetz. Beantworte diese Frage: ${question}`
+        }]
       }]
     });
 
     const options = {
       hostname: 'generativelanguage.googleapis.com',
       port: 443,
-      path: `/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      path: `/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,30 +34,33 @@ exports.handler = async function (event, context) {
       }
     };
 
-    // Wir führen die Anfrage aus und warten auf die Antwort
     const botAnswer = await new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          let errorData = '';
-          res.on('data', (chunk) => errorData += chunk);
-          res.on('end', () => {
-            console.error("Google API Error:", errorData);
-            reject(new Error(`Google API responded with status: ${res.statusCode}`));
-          });
-          return;
-        }
         let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
+          console.log('Status:', res.statusCode);
+          console.log('Response:', data);
+          
+          if (res.statusCode !== 200) {
+            reject(new Error(`API Error ${res.statusCode}: ${data}`));
+            return;
+          }
+          
           try {
-            const parsedData = JSON.parse(data);
-            resolve(parsedData.candidates[0].content.parts[0].text);
+            const parsed = JSON.parse(data);
+            if (parsed.candidates && parsed.candidates[0]) {
+              resolve(parsed.candidates[0].content.parts[0].text);
+            } else {
+              reject(new Error('Unexpected response format'));
+            }
           } catch (e) {
             reject(e);
           }
         });
       });
-      req.on('error', (e) => reject(e));
+      
+      req.on('error', reject);
       req.write(postData);
       req.end();
     });
@@ -72,10 +72,13 @@ exports.handler = async function (event, context) {
     };
 
   } catch (error) {
-    console.error('Detailed Error:', error);
+    console.error('Error:', error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Es gab ein internes Problem.', details: error.message })
+      body: JSON.stringify({ 
+        error: 'Server error', 
+        details: error.message 
+      })
     };
   }
 };
