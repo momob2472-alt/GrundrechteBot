@@ -8,7 +8,7 @@ exports.handler = async function (event, context) {
   try {
     const { question } = JSON.parse(event.body);
     const apiKey = process.env.GOOGLE_API_KEY; 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
     const systemInstruction = "Du bist ein hilfreicher Assistent namens GrundrechteBot. Deine Aufgabe ist es, Fragen zum deutschen Grundgesetz klar, präzise und für Laien verständlich zu beantworten. Beziehe dich immer auf die relevanten Artikel. Antworte ausschließlich auf Deutsch.";
 
