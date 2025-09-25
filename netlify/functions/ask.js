@@ -9,6 +9,7 @@ exports.handler = async function (event, context) {
 
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
+    console.error("API Key is not set in environment variables.");
     return { statusCode: 500, body: 'API Key not found.' };
   }
 
@@ -40,12 +41,16 @@ exports.handler = async function (event, context) {
     const botAnswer = await new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          return reject(new Error(`Google API responded with status: ${res.statusCode}`));
+          let errorData = '';
+          res.on('data', (chunk) => errorData += chunk);
+          res.on('end', () => {
+            console.error("Google API Error:", errorData);
+            reject(new Error(`Google API responded with status: ${res.statusCode}`));
+          });
+          return;
         }
         let data = '';
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
+        res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
           try {
             const parsedData = JSON.parse(data);
@@ -55,11 +60,7 @@ exports.handler = async function (event, context) {
           }
         });
       });
-
-      req.on('error', (e) => {
-        reject(e);
-      });
-
+      req.on('error', (e) => reject(e));
       req.write(postData);
       req.end();
     });
@@ -75,9 +76,6 @@ exports.handler = async function (event, context) {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Es gab ein internes Problem.', details: error.message })
-    };
-  }
-};
     };
   }
 };
