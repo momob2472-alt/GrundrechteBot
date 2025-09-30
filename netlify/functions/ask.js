@@ -6,25 +6,18 @@ exports.handler = async function (event, context) {
   }
 
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    console.error("No API Key found");
-    return { statusCode: 500, body: JSON.stringify({ error: 'No API Key configured' }) };
-  }
-
+  
   try {
     const { question } = JSON.parse(event.body);
     
     const postData = JSON.stringify({
-      model: "mixtral-8x7b-32768",  // GEÄNDERTES MODELL
+      model: "mixtral-8x7b-32768",
       messages: [{
-        role: "system",
-        content: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch."
-      }, {
         role: "user",
         content: question
       }],
       temperature: 0.7,
-      max_tokens: 1024
+      max_tokens: 500
     });
 
     const options = {
@@ -34,40 +27,38 @@ exports.handler = async function (event, context) {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
       }
     };
 
-    const botAnswer = await new Promise((resolve, reject) => {
+    const result = await new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
         let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
-          console.log('Status:', res.statusCode);
-          console.log('Response:', data.substring(0, 200));
-          
-          if (res.statusCode !== 200) {
-            reject(new Error(`API Error ${res.statusCode}: ${data}`));
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            resolve(parsed.choices[0].message.content);
-          } catch (e) {
-            reject(new Error('Parse error: ' + e.message));
-          }
+          resolve({ status: res.statusCode, data: data });
         });
       });
       
-      req.on('error', reject);
+      req.on('error', (e) => reject(e));
       req.write(postData);
       req.end();
     });
 
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ answer: botAnswer })
-    };
+    console.log('Groq Response Status:', result.status);
+    
+    if (result.status === 200) {
+      const parsed = JSON.parse(result.data);
+      const answer = parsed.choices?.[0]?.message?.content || "Keine Antwort erhalten";
+      
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ answer: answer })
+      };
+    } else {
+      throw new Error(`Groq API Error: ${result.status} - ${result.data}`);
+    }
 
   } catch (error) {
     console.error('Error:', error.message);
