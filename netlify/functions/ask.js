@@ -5,16 +5,17 @@ exports.handler = async function (event, context) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const apiKey = process.env.GROQ_API_KEY; // Neuer Key Name!
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'API Key not found.' }) };
+    console.error("No API Key found");
+    return { statusCode: 500, body: JSON.stringify({ error: 'No API Key configured' }) };
   }
 
   try {
     const { question } = JSON.parse(event.body);
     
     const postData = JSON.stringify({
-      model: "llama3-70b-8192",
+      model: "mixtral-8x7b-32768",  // GEÄNDERTES MODELL
       messages: [{
         role: "system",
         content: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch."
@@ -41,6 +42,9 @@ exports.handler = async function (event, context) {
         let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
+          console.log('Status:', res.statusCode);
+          console.log('Response:', data.substring(0, 200));
+          
           if (res.statusCode !== 200) {
             reject(new Error(`API Error ${res.statusCode}: ${data}`));
             return;
@@ -49,7 +53,7 @@ exports.handler = async function (event, context) {
             const parsed = JSON.parse(data);
             resolve(parsed.choices[0].message.content);
           } catch (e) {
-            reject(e);
+            reject(new Error('Parse error: ' + e.message));
           }
         });
       });
@@ -66,6 +70,7 @@ exports.handler = async function (event, context) {
     };
 
   } catch (error) {
+    console.error('Error:', error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Server error', details: error.message })
