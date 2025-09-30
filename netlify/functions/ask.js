@@ -5,32 +5,34 @@ exports.handler = async function (event, context) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const apiKey = process.env.GOOGLE_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY; // Neuer Key Name!
   if (!apiKey) {
-    console.error("No API Key found");
-    return { statusCode: 500, body: JSON.stringify({ error: 'No API Key configured' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'API Key not found.' }) };
   }
 
   try {
     const { question } = JSON.parse(event.body);
     
-    // Verwenden Sie das aktuelle Modell und v1 statt v1beta
     const postData = JSON.stringify({
-      contents: [{
-        parts: [{
-          text: `Du bist ein Assistent für das deutsche Grundgesetz. Beantworte diese Frage: ${question}`
-        }]
-      }]
+      model: "llama3-70b-8192",
+      messages: [{
+        role: "system",
+        content: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch."
+      }, {
+        role: "user",
+        content: question
+      }],
+      temperature: 0.7,
+      max_tokens: 1024
     });
 
     const options = {
-      hostname: 'generativelanguage.googleapis.com',
-      port: 443,
-      path: `/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+      hostname: 'api.groq.com',
+      path: '/openai/v1/chat/completions',
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
       }
     };
 
@@ -39,21 +41,13 @@ exports.handler = async function (event, context) {
         let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
-          console.log('Status:', res.statusCode);
-          console.log('Response:', data);
-          
           if (res.statusCode !== 200) {
             reject(new Error(`API Error ${res.statusCode}: ${data}`));
             return;
           }
-          
           try {
             const parsed = JSON.parse(data);
-            if (parsed.candidates && parsed.candidates[0]) {
-              resolve(parsed.candidates[0].content.parts[0].text);
-            } else {
-              reject(new Error('Unexpected response format'));
-            }
+            resolve(parsed.choices[0].message.content);
           } catch (e) {
             reject(e);
           }
@@ -72,13 +66,9 @@ exports.handler = async function (event, context) {
     };
 
   } catch (error) {
-    console.error('Error:', error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Server error', 
-        details: error.message 
-      })
+      body: JSON.stringify({ error: 'Server error', details: error.message })
     };
   }
 };
