@@ -254,6 +254,10 @@
                 <input type="text" id="userInput" placeholder="Stellen Sie hier Ihre Frage..." autocomplete="off">
                 <button type="submit" aria-label="Nachricht senden">➤</button>
             </form>
+            <div class="file-upload-container">
+                <input type="file" id="fileInput" accept=".txt,.pdf,.md">
+                <button id="uploadButton">Upload</button>
+            </div>
         </div>
     </main>
     
@@ -275,7 +279,38 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('userInput');
         const chatMessages = document.getElementById('chat-messages');
+        const uploadButton = document.getElementById('uploadButton');
+        const fileInput = document.getElementById('fileInput');
         const API_URL = '/.netlify/functions/ask';
+        const UPLOAD_URL = '/.netlify/functions/upload';
+
+        uploadButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                appendMessage('bot', 'Bitte wählen Sie eine Datei aus.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                appendMessage('bot', data.message);
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                appendMessage('bot', 'Entschuldigung, es gab ein Problem beim Hochladen der Datei.');
+            }
+        });
 
         function appendMessage(sender, text) {
             const messageDiv = document.createElement('div');
