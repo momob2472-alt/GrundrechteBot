@@ -16,24 +16,28 @@ exports.handler = async function (event, context) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const chat = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch.",
-        },
-        {
-          role: "model",
-          parts: "Verstanden. Ich bin bereit, Fragen zum deutschen Grundgesetz zu beantworten.",
-        },
-      ],
-      generationConfig: {
-        maxOutputTokens: 1024,
-        temperature: 0.7,
-      },
-    });
+    const { question, area, context } = JSON.parse(event.body);
 
-    const result = await chat.sendMessage(question);
+    const areaDescriptions = {
+      'oeffentlich': 'Öffentliches Recht (Staatsrecht, Verwaltungsrecht, Verfassungsrecht)',
+      'zivil': 'Zivilrecht (BGB, Schuldrecht, Sachenrecht)',
+      'straf': 'Strafrecht (Allgemeiner und Besonderer Teil)'
+    };
+
+    const systemPrompt = `Du bist ein spezialisierter Rechtsassistent für Jurastudenten im Bereich ${areaDescriptions[area] || 'Recht'}.
+
+Deine Aufgaben:
+- Unterstütze beim Erlernen des Gutachtenstils (Obersatz, Definition, Subsumtion, Ergebnis)
+- Arbeite ausschließlich mit den hochgeladenen Dokumenten des Nutzers
+- Gib präzise, faktenbasierte Antworten
+- Verwende eine akademisch angemessene, aber verständliche Sprache
+- Strukturiere deine Antworten klar nach der Gutachtenmethodik
+
+${context || ''}
+
+Antworte auf Deutsch und beziehe dich nur auf die bereitgestellten Dokumente.`;
+
+    const result = await model.generateContent(systemPrompt + "\n\n" + question);
     const response = await result.response;
     const botAnswer = response.text();
 
