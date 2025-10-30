@@ -35,7 +35,7 @@ ${context || ''}
 
 Antworte auf Deutsch und beziehe dich nur auf die bereitgestellten Dokumente.`;
 
-    const result = await model.generateContent(systemPrompt + "\n\n" + question);
+    const result = await model.generateContent([systemPrompt, question]);
     const response = await result.response;
     const botAnswer = response.text();
 
