@@ -1,65 +1,41 @@
-const https = require('https');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'No API Key configured' }) };
   }
 
   try {
     const { question } = JSON.parse(event.body);
-    
-    const postData = JSON.stringify({
-      model: "llama-3.1-8b-instant",  // NEUES MODELL!
-      messages: [{
-        role: "system",
-        content: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch."
-      }, {
-        role: "user",
-        content: question
-      }],
-      temperature: 0.7,
-      max_tokens: 1024
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch.",
+        },
+        {
+          role: "model",
+          parts: "Verstanden. Ich bin bereit, Fragen zum deutschen Grundgesetz zu beantworten.",
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 1024,
+        temperature: 0.7,
+      },
     });
 
-    const options = {
-      hostname: 'api.groq.com',
-      path: '/openai/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      }
-    };
-
-    const botAnswer = await new Promise((resolve, reject) => {
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => data += chunk);
-        res.on('end', () => {
-          console.log('Status:', res.statusCode);
-          
-          if (res.statusCode !== 200) {
-            reject(new Error(`API Error ${res.statusCode}: ${data}`));
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            resolve(parsed.choices[0].message.content);
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
-      
-      req.on('error', reject);
-      req.write(postData);
-      req.end();
-    });
+    const result = await chat.sendMessage(question);
+    const response = await result.response;
+    const botAnswer = response.text();
 
     return {
       statusCode: 200,
