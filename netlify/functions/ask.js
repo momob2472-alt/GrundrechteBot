@@ -11,13 +11,32 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    const { question } = JSON.parse(event.body);
+    const { question, area, context } = JSON.parse(event.body);
+    
+    const areaDescriptions = {
+      'oeffentlich': 'Öffentliches Recht (Staatsrecht, Verwaltungsrecht, Verfassungsrecht)',
+      'zivil': 'Zivilrecht (BGB, Schuldrecht, Sachenrecht)',
+      'straf': 'Strafrecht (Allgemeiner und Besonderer Teil)'
+    };
+    
+    const systemPrompt = `Du bist ein spezialisierter Rechtsassistent für Jurastudenten im Bereich ${areaDescriptions[area] || 'Recht'}.
+    
+Deine Aufgaben:
+- Unterstütze beim Erlernen des Gutachtenstils (Obersatz, Definition, Subsumtion, Ergebnis)
+- Arbeite ausschließlich mit den hochgeladenen Dokumenten des Nutzers
+- Gib präzise, faktenbasierte Antworten
+- Verwende eine akademisch angemessene, aber verständliche Sprache
+- Strukturiere deine Antworten klar nach der Gutachtenmethodik
+
+${context || ''}
+
+Antworte auf Deutsch und beziehe dich nur auf die bereitgestellten Dokumente.`;
     
     const postData = JSON.stringify({
-      model: "llama-3.1-8b-instant",  // NEUES MODELL!
+      model: "llama-3.1-8b-instant",
       messages: [{
         role: "system",
-        content: "Du bist ein hilfreicher Assistent für das deutsche Grundgesetz. Antworte präzise und verständlich auf Deutsch."
+        content: systemPrompt
       }, {
         role: "user",
         content: question
