@@ -11,8 +11,6 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    const { question } = JSON.parse(event.body);
-
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
