@@ -38,11 +38,25 @@ Deine Aufgaben:
 - Strukturiere deine Antworten klar nach der Gutachtenmethodik
 ${fileInstruction}
 
-${context || ''}
-
 Antworte auf Deutsch.`;
 
-    const result = await model.generateContent([systemPrompt, question]);
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "Verstanden. Ich bin bereit, Ihre Fragen zu beantworten." }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Verstanden. Ich bin bereit, Ihre Fragen zu beantworten." }],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 2048,
+      },
+    });
+
+    const result = await chat.sendMessage(question);
     const response = await result.response;
     const botAnswer = response.text();
 
