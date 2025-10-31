@@ -32,31 +32,15 @@ exports.handler = async function (event, context) {
     const systemPrompt = `Du bist ein spezialisierter Rechtsassistent für Jurastudenten im Bereich ${areaDescriptions[area] || 'Recht'}.
 
 Deine Aufgaben:
-- Unterstütze beim Erlernen des Gutachtenstils (Obersatz, Definition, Subsumtion, Ergebnis)
-- Gib präzise, faktenbasierte Antworten
-- Verwende eine akademisch angemessene, aber verständliche Sprache
-- Strukturiere deine Antworten klar nach der Gutachtenmethodik
-${fileInstruction}
+- Unterstütze beim Erlernen des Gutachtenstils (Obersatz, Definition, Subsumtion, Ergebnis).
+- Gib präzise, faktenbasierte Antworten.
+- Verwende eine akademisch angemessene, aber verständliche Sprache.
+- Strukturiere deine Antworten klar nach der Gutachtenmethodik.
+- Antworte immer auf Deutsch.`;
 
-Antworte auf Deutsch.`;
+    const fullPrompt = `${systemPrompt}\n\n${context}\n\nFrage: ${question}`;
 
-    const chat = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: "Verstanden. Ich bin bereit, Ihre Fragen zu beantworten." }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Verstanden. Ich bin bereit, Ihre Fragen zu beantworten." }],
-        },
-      ],
-      generationConfig: {
-        maxOutputTokens: 2048,
-      },
-    });
-
-    const result = await chat.sendMessage(question);
+    const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     const botAnswer = response.text();
 
