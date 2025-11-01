@@ -22,13 +22,6 @@ exports.handler = async function (event, context) {
       'straf': 'Strafrecht (Allgemeiner und Besonderer Teil)'
     };
 
-    const hasFiles = !context.startsWith('Keine Dokumente hochgeladen');
-
-    let fileInstruction = '';
-    if (hasFiles) {
-      fileInstruction = `Arbeite ausschließlich mit den hochgeladenen Dokumenten des Nutzers und beziehe dich nur auf die bereitgestellten Dokumente.`;
-    }
-
     const systemPrompt = `Du bist ein spezialisierter Rechtsassistent für Jurastudenten im Bereich ${areaDescriptions[area] || 'Recht'}.
 
 Deine Aufgaben:
@@ -36,9 +29,12 @@ Deine Aufgaben:
 - Gib präzise, faktenbasierte Antworten.
 - Verwende eine akademisch angemessene, aber verständliche Sprache.
 - Strukturiere deine Antworten klar nach der Gutachtenmethodik.
-- Antworte immer auf Deutsch.`;
+- Antworte immer auf Deutsch.
 
-    const fullPrompt = `${systemPrompt}\n\n${context}\n\nFrage: ${question}`;
+Wichtiger Hinweis zur Beantwortung:
+${context}`;
+
+    const fullPrompt = `${systemPrompt}\n\nFrage: ${question}`;
 
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
